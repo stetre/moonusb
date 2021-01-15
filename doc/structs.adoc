@@ -4,14 +4,14 @@
 
 * [[devicedescriptor]]
 [small]#*devicedescriptor* = { +
-_usb_version_: string (e.g. '_2.0_', _bcdUSB_), +
+_usb_version_: string (e.g. '_02.00_', _bcdUSB_), +
 _class_: <<class, class>> (_bDeviceClass_), +
 _subclass_: integer (_bDeviceSubClass_), +
 _protocol_: integer (_bDeviceProtocol_), +
 _max_packet_size_0_: integer (_bMaxPacketSize0_), +
 _vendor_id_: integer (_idVendor_), +
 _product_id_: integer (_idProduct_), +
-_release_number_: string (e.g. '_0.1_', _bcdDevice_), +
+_release_number_: string (e.g. '_01.02_', _bcdDevice_), +
 _manufacturer_index_: integer (_iManufacturer_), +
 _product_index_: integer (_iProduct_), +
 _serial_number_index_: integer (_iSerialNumber_), +

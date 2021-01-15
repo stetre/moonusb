@@ -1134,7 +1134,7 @@ Rfr:  <em>libusb_get_device_descriptor( )</em>, <em>libusb_get_config_descriptor
 <li>
 <p><em>string</em> = <em>devhandle</em>:<strong>get_string_descriptor</strong>(<em>index</em>)<br>
 <em>length</em> = <em>devhandle</em>:<strong>get_descriptor</strong>(<em>descriptor_type</em>, <em>descriptor_index</em>, <em>ptr</em>, <em>length</em>)<br>
-<a href="#bosdescriptor"><em>bosdecriptor</em></a> = <em>devhandle</em>:<strong>get_bos_descriptor</strong>(<em>index</em>)<br>
+<a href="#bosdescriptor"><em>bosdecriptor</em></a> = <em>devhandle</em>:<strong>get_bos_descriptor</strong>( )<br>
 <span class="small">Retrieve a descriptor.<br>
 These methods are blocking since they involve transfers.<br>
 Rfr: <em>libusb_get_string_descriptor( )</em>,  <em>libusb_get_descriptor( )</em>,  <em>libusb_get_bos_descriptor( )</em>.</span></p>
@@ -1738,14 +1738,14 @@ previously obtained with the <a href="#now">now</a>(&nbsp;) function.</span></p>
 <li>
 <p><a id="devicedescriptor"></a>
 <span class="small"><strong>devicedescriptor</strong> = {<br>
-<em>usb_version</em>: string (e.g. '<em>2.0</em>', <em>bcdUSB</em>),<br>
+<em>usb_version</em>: string (e.g. '<em>02.00</em>', <em>bcdUSB</em>),<br>
 <em>class</em>: <a href="#class">class</a> (<em>bDeviceClass</em>),<br>
 <em>subclass</em>: integer (<em>bDeviceSubClass</em>),<br>
 <em>protocol</em>: integer (<em>bDeviceProtocol</em>),<br>
 <em>max_packet_size_0</em>: integer (<em>bMaxPacketSize0</em>),<br>
 <em>vendor_id</em>: integer (<em>idVendor</em>),<br>
 <em>product_id</em>: integer (<em>idProduct</em>),<br>
-<em>release_number</em>: string (e.g. '<em>0.1</em>', <em>bcdDevice</em>),<br>
+<em>release_number</em>: string (e.g. '<em>01.02</em>', <em>bcdDevice</em>),<br>
 <em>manufacturer_index</em>: integer (<em>iManufacturer</em>),<br>
 <em>product_index</em>: integer (<em>iProduct</em>),<br>
 <em>serial_number_index</em>: integer (<em>iSerialNumber</em>),<br>

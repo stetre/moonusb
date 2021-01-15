@@ -91,7 +91,7 @@ Rfr:  _libusb_get_device_descriptor( )_, _libusb_get_config_descriptor( )_,  _li
 [[get_descriptor]]
 * _string_ = _devhandle_++:++*get_string_descriptor*(_index_) +
 _length_ = _devhandle_++:++*get_descriptor*(_descriptor_type_, _descriptor_index_, _ptr_, _length_) +
-<<bosdescriptor, _bosdecriptor_>> = _devhandle_++:++*get_bos_descriptor*(_index_) +
+<<bosdescriptor, _bosdecriptor_>> = _devhandle_++:++*get_bos_descriptor*( ) +
 [small]#Retrieve a descriptor. +
 These methods are blocking since they involve transfers. +
 Rfr: _libusb_get_string_descriptor( )_,  _libusb_get_descriptor( )_,  _libusb_get_bos_descriptor( )_.#
