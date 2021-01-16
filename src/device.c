@@ -144,11 +144,12 @@ F(Get_max_iso_packet_size, libusb_get_max_iso_packet_size)
 
 static int Get_device_descriptor(lua_State *L)
     {
+    ud_t *ud;
     struct libusb_device_descriptor desc;
-    device_t *device = checkdevice(L, 1, NULL);
+    device_t *device = checkdevice(L, 1, &ud);
     int ec = libusb_get_device_descriptor(device, &desc);
     CheckError(L, ec);
-    pushdevicedescriptor(L, &desc);
+    pushdevicedescriptor(L, &desc, device, (context_t*)userdata(ud->parent_ud));
     return 1;
     }
 

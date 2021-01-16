@@ -98,10 +98,12 @@ static void pushbcdversion(lua_State *L, uint16_t val)
     lua_pushfstring(L, "%d%d.%d%d", (val>>12)&0x000f, (val>>8)&0x000f, (val>>4)&0x000f, (val)&0x000f);
     }
 
-void pushdevicedescriptor(lua_State *L, const struct libusb_device_descriptor *s)
+int pushdevicedescriptor(lua_State *L, const struct libusb_device_descriptor *s, device_t *device, context_t *context)
     {
+    int i, ec;
+    struct libusb_config_descriptor *conf;
     lua_newtable(L);
-    pushbcdversion(L, s->bcdUSB); //@@mettere a posto doc
+    pushbcdversion(L, s->bcdUSB);
     lua_setfield(L, -2, "usb_version");
     pushclass(L, s->bDeviceClass);
     lua_setfield(L, -2, "class");
@@ -115,7 +117,7 @@ void pushdevicedescriptor(lua_State *L, const struct libusb_device_descriptor *s
     lua_setfield(L, -2, "vendor_id");
     lua_pushinteger(L, s->idProduct);
     lua_setfield(L, -2, "product_id");
-    pushbcdversion(L, s->bcdDevice); //@@mettere a posto doc
+    pushbcdversion(L, s->bcdDevice);
     lua_setfield(L, -2, "release_number");
     lua_pushinteger(L, s->iManufacturer);
     lua_setfield(L, -2, "manufacturer_index");
@@ -125,6 +127,17 @@ void pushdevicedescriptor(lua_State *L, const struct libusb_device_descriptor *s
     lua_setfield(L, -2, "serial_number_index");
     lua_pushinteger(L, s->bNumConfigurations);
     lua_setfield(L, -2, "num_configurations");
+    lua_newtable(L);
+    for(i=0; i<s->bNumConfigurations; i++)
+        {
+        ec = libusb_get_config_descriptor(device, i, &conf);
+        CheckError(L, ec);
+        pushconfigdescriptor(L, conf, context);
+        lua_rawseti(L, -2, i+1);
+        libusb_free_config_descriptor(conf);
+        }
+    lua_setfield(L, -2, "configuration");
+    return 0;
     }
 
 static void pushssendpointcompaniondescriptor(lua_State *L, const struct libusb_ss_endpoint_companion_descriptor *s)

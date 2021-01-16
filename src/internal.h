@@ -156,7 +156,7 @@ int checkcontrolsetup(lua_State *L, int arg, struct libusb_control_setup *dst);
 #define pushcontrolsetup moonusb_pushcontrolsetup
 void pushcontrolsetup(lua_State *L, const struct libusb_control_setup *s);
 #define pushdevicedescriptor moonusb_pushdevicedescriptor
-void pushdevicedescriptor(lua_State *L, const struct libusb_device_descriptor *s);
+int pushdevicedescriptor(lua_State *L, const struct libusb_device_descriptor *s, device_t *device, context_t *context);
 #define pushconfigdescriptor moonusb_pushconfigdescriptor
 void pushconfigdescriptor(lua_State *L, const struct libusb_config_descriptor *s, context_t *context);
 #define pushbosdescriptor moonusb_pushbosdescriptor

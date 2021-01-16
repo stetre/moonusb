@@ -16,9 +16,8 @@ _manufacturer_index_: integer (_iManufacturer_), +
 _product_index_: integer (_iProduct_), +
 _serial_number_index_: integer (_iSerialNumber_), +
 _num_configurations_: integer (_bNumConfigurations_), +
+_configuration_: {<<configdescriptor, configdescriptor>>}, +
 } (rfr: link:++http://libusb.sourceforge.net/api-1.0/structlibusb__device__descriptor.html++[libusb_device_descriptor])#
-
-''''
 
 * [[configdescriptor]]
 [small]#*configdescriptor* = { +

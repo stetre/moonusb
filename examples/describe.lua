@@ -62,9 +62,8 @@ end
 print("  serial number: "..serial_number)
 
 -- Get and print the configuration(s)
-for i=0, desc.num_configurations-1 do
-   local conf = device:get_config_descriptor(i)
-   print("Configuration["..i.."]")
+for _, conf in ipairs(desc.configuration) do
+   print("Configuration")
    print("  value: "..conf.value)
    print("  index: "..conf.index)
    print("  self_powered: "..tostring(conf.self_powered)) -- boolean are not coerced...
