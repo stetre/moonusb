@@ -1,0 +1,21 @@
+
+[[links]]
+== Useful links
+
+* Lua Manuals: 
+link:++http://www.lua.org/manual/5.3/++[5.3],
+link:++http://www.lua.org/manual/5.4/++[5.4].
+
+* link:++http://libusb.sourceforge.net/api-1.0/++[Libusb-1.0 API documentation].
+
+* https://github.com/stetre/moonlibs[MoonLibs] collection.
+
+* https://www.usb.org/documents[USB-IF Document Library] (USB specifications).
+
+* https://gitlab.com/wireshark/wireshark/-/wikis/CaptureSetup/USB[Wireshark USB CaptureSetup]
+(how to capture USB packets with Wireshark).
+
+* Frank Zhao's
+http://eleccelerator.com/usbdescreqparser/[USB parser] and
+https://eleccelerator.com/tutorial-about-usb-hid-report-descriptors/[HID report tutorial].
+
