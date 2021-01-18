@@ -6,6 +6,15 @@ local usb = require("moonusb")
 
 local function fmt(...) return string.format(...) end
 
+local function hex(bstr)
+-- Convert a binary string to a readable string of hexadecimal bytes
+-- (eg. "00 21 f3 54")
+   local fmt = string.rep("B", #bstr)
+   local t = { string.unpack(fmt, bstr) }
+   for i, x in ipairs(t) do t[i] = string.format("%.2x", x) end
+   return table.concat(t, " ")
+end
+
 local vendor_id = tonumber(arg[1])
 local product_id = tonumber(arg[2])
 if not vendor_id or not product_id or
@@ -70,7 +79,7 @@ for _, conf in ipairs(desc.configuration) do
    print("  remote_wakeup: "..tostring(conf.remote_wakeup))
    print("  max_power: "..conf.max_power)
    print("  num_interfaces: "..conf.num_interfaces)
-   print("  extra bytes: ".. (conf.extra and #conf.extra or 0))
+   print("  extra bytes: ".. (conf.extra and hex(conf.extra) or "-"))
    -- Print the interface(s) for this configuration
    for _, alt in ipairs(conf.interface) do
       -- Each entry in conf.interface is a list of 1+ interfacdescriptor's,
@@ -84,7 +93,7 @@ for _, conf in ipairs(desc.configuration) do
          print("    protocol: "..itf.protocol)
          print("    index: "..itf.index)
          print("    num_endpoints: "..itf.num_endpoints)
-         print("    extra bytes: ".. (itf.extra and #itf.extra or 0))
+         print("    extra bytes: ".. (itf.extra and hex(itf.extra) or "-"))
          -- Print the endpoints for this interface
          for _, ep in ipairs(itf.endpoint) do
             print("    Endpoint")
@@ -98,7 +107,7 @@ for _, conf in ipairs(desc.configuration) do
             print("      interval: "..ep.interval)
             print("      refresh: "..ep.refresh)
             print("      synch_address: "..fmt("0x%.2x", ep.synch_address))
-            print("      extra bytes: ".. (ep.extra and #ep.extra or 0))
+            print("      extra bytes: ".. (ep.extra and hex(ep.extra) or "-"))
             local comp = ep.ss_endpoint_companion_descriptor
             if comp then 
                print("      Endpoint companion")
