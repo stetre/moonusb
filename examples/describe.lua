@@ -11,6 +11,7 @@ local function hex(bstr)
 -- (eg. "00 21 f3 54")
    local fmt = string.rep("B", #bstr)
    local t = { string.unpack(fmt, bstr) }
+   t[#t] = nil -- this entry is the index of the next unread byte, we don't want it!
    for i, x in ipairs(t) do t[i] = string.format("%.2x", x) end
    return table.concat(t, " ")
 end
