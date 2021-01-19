@@ -6,16 +6,6 @@ local usb = require("moonusb")
 
 local function fmt(...) return string.format(...) end
 
-local function hex(bstr)
--- Convert a binary string to a readable string of hexadecimal bytes
--- (eg. "00 21 f3 54")
-   local fmt = string.rep("B", #bstr)
-   local t = { string.unpack(fmt, bstr) }
-   t[#t] = nil -- this entry is the index of the next unread byte, we don't want it!
-   for i, x in ipairs(t) do t[i] = string.format("%.2x", x) end
-   return table.concat(t, " ")
-end
-
 local vendor_id = tonumber(arg[1])
 local product_id = tonumber(arg[2])
 if not vendor_id or not product_id or
@@ -23,6 +13,42 @@ if not vendor_id or not product_id or
    print("Usage:   "..arg[0].." vendor_id product_id")
    print("Example: "..arg[0].." 0x0012 0x0034 \n")
    os.exit(true)
+end
+
+local function hex(bytes)
+-- Convert a binary string to a readable string of hexadecimal bytes
+-- (eg. "00 21 f3 54")
+   local fmt = string.rep("B", #bytes)
+   local t = { string.unpack(fmt, bytes) }
+   t[#t] = nil -- this entry is the index of the next unread byte, we don't want it!
+   for i, x in ipairs(t) do t[i] = string.format("%.2x", x) end
+   return table.concat(t, " ")
+end
+
+local function bcd2string(x)
+   return string.format("%d%d.%d%d", (x>>12)&0x0f, (x>>8)&0x0f, (x>>4)&0xf, x&0xf)
+end
+
+local function decode_hid_descriptor(bytes)
+-- Decode a HID descriptor as per section 6.2.1 of the specification
+-- "Device Class Definition for Human Interface Devices (HID)" release 1.11
+   local len, dt, rel, cc, n, ofs = string.unpack("I1I1I2I1I1", bytes)
+   -- Check that it is indeed a HID descriptor of the correct length
+   assert(dt == 0x21 and len == (6 + 3*n))
+   local desc = {}
+   desc.release = bcd2string(rel)
+   desc.country_code = cc
+   desc.num_descriptors = n
+   desc.descriptor = {}
+   for i=1, n do
+      local t, l, ofs = string.unpack("I1I2", bytes, ofs)
+      if t == 0x22 then t = "report"
+      elseif t == 0x23 then t = "physical"
+      else error("unsexpected hid descriptor type "..t)
+      end
+      desc.descriptor[i] = { type=t, length=l }
+   end
+   return desc
 end
 
 -- Create a context and try to open the device:
@@ -94,7 +120,20 @@ for _, conf in ipairs(desc.configuration) do
          print("    protocol: "..itf.protocol)
          print("    index: "..itf.index)
          print("    num_endpoints: "..itf.num_endpoints)
-         print("    extra bytes: ".. (itf.extra and hex(itf.extra) or "-"))
+         if itf.class == 'hid' then
+            -- The extra bytes should contain a HID descriptor, so let's decode it
+            local hid = decode_hid_descriptor(itf.extra)
+            print("    HID descriptor (extra bytes)")
+            print("      release: "..hid.release)
+            print("      country_code: "..hid.country_code)
+            print("      num_descriptors: "..hid.num_descriptors)
+            for _, d in ipairs(hid.descriptor) do
+               print("        type: "..d.type)
+               print("        length: "..d.length)
+            end
+         else
+            print("    extra bytes: ".. (itf.extra and hex(itf.extra) or "-"))
+         end
          -- Print the endpoints for this interface
          for _, ep in ipairs(itf.endpoint) do
             print("    Endpoint")
