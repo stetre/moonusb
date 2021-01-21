@@ -420,7 +420,7 @@ void moonusb_open_enums(lua_State *L)
     domain = DOMAIN_TRANSFER_STATUS; /* libusb_transfer_status */
     ADD(LIBUSB_TRANSFER_COMPLETED, "completed");
     ADD(LIBUSB_TRANSFER_ERROR, "error");
-    ADD(LIBUSB_TRANSFER_TIMED_OUT, "timed out");
+    ADD(LIBUSB_TRANSFER_TIMED_OUT, "timeout");
     ADD(LIBUSB_TRANSFER_CANCELLED, "cancelled");
     ADD(LIBUSB_TRANSFER_STALL, "stall");
     ADD(LIBUSB_TRANSFER_NO_DEVICE, "no device");

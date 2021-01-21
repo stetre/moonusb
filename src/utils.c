@@ -38,13 +38,6 @@ int notavailable(lua_State *L, ...)
     return luaL_error(L, "function not available in this CL version");
     }
   
-int nilerror(lua_State *L, const char* s)
-    {
-    lua_pushnil(L);
-    lua_pushstring(L, s);
-    return 2;
-    }
-
 /*------------------------------------------------------------------------------*
  | Malloc                                                                       |
  *------------------------------------------------------------------------------*/

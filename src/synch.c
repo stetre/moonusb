@@ -45,17 +45,7 @@ static int Control_transfer(lua_State *L)
         lua_pushinteger(L, ec); // actual length of data starting from ptr+8
         return 1;
         }
-    switch(ec)
-        {
-        case LIBUSB_SUCCESS:    break;
-        case LIBUSB_ERROR_TIMEOUT:  return nilerror(L, "timeout");
-        case LIBUSB_ERROR_PIPE:     return nilerror(L, "pipe");
-        case LIBUSB_ERROR_NO_DEVICE: return nilerror(L, "no device");
-        case LIBUSB_ERROR_OVERFLOW: return nilerror(L, "overflow");
-        case LIBUSB_ERROR_BUSY:     return nilerror(L, "busy");
-        case LIBUSB_ERROR_INVALID_PARAM: return nilerror(L, "invalid param");
-        default: CheckError(L, ec);
-        }
+    CheckError(L, ec);
     return 0;
     }
 
@@ -70,17 +60,7 @@ static int Func(lua_State *L)                                           \
     int length = luaL_checkinteger(L, 4);                               \
     unsigned int timeout = luaL_checkinteger(L, 5);                     \
     ec = func(devhandle, endpoint, ptr, length, &transferred, timeout); \
-    switch(ec)                                                          \
-        {                                                               \
-        case LIBUSB_SUCCESS:    break;                                  \
-        case LIBUSB_ERROR_TIMEOUT:  return nilerror(L, "timeout");      \
-        case LIBUSB_ERROR_PIPE:     return nilerror(L, "pipe");         \
-        case LIBUSB_ERROR_NO_DEVICE: return nilerror(L, "no device");   \
-        case LIBUSB_ERROR_OVERFLOW: return nilerror(L, "overflow");     \
-        case LIBUSB_ERROR_BUSY:     return nilerror(L, "busy");         \
-        case LIBUSB_ERROR_INVALID_PARAM: return nilerror(L, "invalid param");\
-        default: CheckError(L, ec);                                     \
-        }                                                               \
+    CheckError(L, ec);                                     				\
     lua_pushinteger(L, transferred);                                    \
     return 1;                                                           \
     }

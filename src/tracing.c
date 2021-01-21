@@ -81,11 +81,43 @@ static int Version(lua_State *L)
 //const char *libusb_strerror(int errcode);
 int pusherrcode(lua_State *L, int ec)
     {
+#if 0
     const char *s = libusb_strerror(ec);
     if(s)
         lua_pushstring(L, s);
     else
         lua_pushfstring(L, "unknown libusb error code %d", ec);
+    return 1;
+#endif
+    switch(ec)
+        {
+#define CASE(code, s)   case code: lua_pushstring(L, s); break
+        CASE(LIBUSB_SUCCESS, "success");
+        CASE(LIBUSB_ERROR_IO, "io error");
+        CASE(LIBUSB_ERROR_INVALID_PARAM, "invalid param");
+        CASE(LIBUSB_ERROR_ACCESS, "access");
+        CASE(LIBUSB_ERROR_NO_DEVICE, "no device");
+        CASE(LIBUSB_ERROR_NOT_FOUND, "not found");
+        CASE(LIBUSB_ERROR_BUSY, "busy");
+        CASE(LIBUSB_ERROR_TIMEOUT, "timeout");
+        CASE(LIBUSB_ERROR_OVERFLOW, "overflow");
+        CASE(LIBUSB_ERROR_PIPE, "pipe");
+        CASE(LIBUSB_ERROR_INTERRUPTED, "interrupted");
+        CASE(LIBUSB_ERROR_NO_MEM, "no mem");
+        CASE(LIBUSB_ERROR_NOT_SUPPORTED, "not supported");
+        CASE(LIBUSB_ERROR_OTHER, "other");
+//      positive values
+//      CASE(LIBUSB_TRANSFER_COMPLETED, "success");
+        CASE(LIBUSB_TRANSFER_ERROR, "error");
+        CASE(LIBUSB_TRANSFER_TIMED_OUT, "timeout");
+        CASE(LIBUSB_TRANSFER_CANCELLED, "cancelled");
+        CASE(LIBUSB_TRANSFER_STALL, "stall");
+        CASE(LIBUSB_TRANSFER_NO_DEVICE, "no device");
+        CASE(LIBUSB_TRANSFER_OVERFLOW, "overflow");
+#undef CASE
+        default:
+            lua_pushstring(L, "unknown");
+        }
     return 1;
     }
 

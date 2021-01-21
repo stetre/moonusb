@@ -70,8 +70,6 @@ void sleeep(double seconds);
 #define since(t) (now() - (t))
 #define notavailable moonusb_notavailable
 int notavailable(lua_State *L, ...);
-#define nilerror moonusb_nilerror
-int nilerror(lua_State *L, const char* s);
 #define Malloc moonusb_Malloc
 void *Malloc(lua_State *L, size_t size);
 #define MallocNoErr moonusb_MallocNoErr

@@ -1270,25 +1270,33 @@ Rfr: <em>libusb_hotplug_deregister_callback( )</em>.</span></p>
 <p>This API needs an event loop. See the <a href="#polling">polling</a> section.</p>
 </div>
 <div id="transfer_callback" class="paragraph">
-<p>Each of the <em>devhandle:submit_xxx(&nbsp;)</em> methods requires a function <em>func</em> as one of its arguments.
-This is the callback that will be executed,  as <strong>func(transfer, status)</strong>,
-when the transfer either completes, fails, or is canceled.
-The method creates and returns a new <em>transfer</em> object, that will be automatically
-deleted at the return of the callback.</p>
+<p><strong>Transfer submit methods</strong></p>
+</div>
+<div class="paragraph">
+<p>Asynchronous transfers are submitted using the <em>devhandle</em>:<strong>submit_xxx</strong>(&nbsp;) methods, that
+create and return a new <em>transfer</em> object.
+Each of these methods requires a function <em>func</em> as one of its arguments.
+This is the callback that will be executed,  as <strong>func(transfer, status)</strong>, when the
+transfer either completes, fails, or is canceled. The <em>transfer</em> object is automatically
+deleted as soon as the callback returns.</p>
+</div>
+<div class="paragraph">
+<p><span class="small">Rfr: <em>libusb_alloc_transfer( )</em>, <em>libusb_fill_xxx_transfer( )</em>, <em>libusb_submit_transfer( )</em>.</span></p>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p><em>transfer</em> = <a href="#devhandle"><em>devhandle</em></a>:<strong>submit_control_transfer</strong>(<em>ptr</em>, <em>length</em>, <em>timeout</em>, <em>func</em>)<br>
+<p><em>transfer</em> = <a href="#devhandle"><em>devhandle</em></a>:<strong>submit_control_transfer</strong>(<em>ptr</em>, <em>size</em>, <em>timeout</em>, <em>func</em>)<br>
 <span class="small">Submit a USB control transfer.<br>
-<em>ptr</em>: lightuserdata containing a pointer to at least <em>length</em> bytes of contiguous memory,<br>
+<em>ptr</em>: lightuserdata containing a pointer to at least <em>size</em> bytes of contiguous memory,<br>
 <em>timeout</em>: timeout in milliseconds (=0 for unlimited timeout).<br>
 <em>func</em>: the <a href="#transfer_callback">callback</a> function.<br>
-The first 8 bytes pointed to by <em>ptr</em> must contain an encoded control setup packet, and the <em>length</em>
-of the memory area must be at least 8 + <em>wLength</em>.<br>
-The setup packet must be followed by the <em>wLength</em> bytes of data to be transferred to the device, or
-of space for the data to be received from the device.<br>
-Rfr: <em>libusb_alloc_transfer( )</em>, <em>libusb_fill_control_transfer( )</em>, <em>libusb_submit_transfer( )</em>.</span></p>
+The first 8 bytes pointed to by <em>ptr</em> must contain an encoded control setup packet, and the <em>size</em>
+of the memory area must be at least <em>wLength</em>+8.<br>
+The setup packet must be followed by the <em>wLength</em> bytes of data to be transferred to the device ('out' transfers), or of space for the data to be received from the device ('in' transfers).<br>
+For host to device transfers ('<em>out</em>'), the setup packet must be followed by the <em>wLength</em> bytes of data to be transferred.<br>
+For device to host transfers ('<em>in</em>'), up the setup packet must be followed by at least <em>wLength</em> bytes of space where to receive data (the received data thus will start at <em>ptr</em>+8).<br>
+Rfr: <em>libusb_fill_control_transfer( )</em>.</span></p>
 </li>
 <li>
 <p><em>transfer</em> = <a href="#devhandle"><em>devhandle</em></a>:<strong>submit_interrupt_transfer</strong>(<em>endpoint</em>, <em>ptr</em>, <em>length</em>, <em>timeout</em>, <em>func</em>)<br>
@@ -1300,8 +1308,9 @@ Rfr: <em>libusb_alloc_transfer( )</em>, <em>libusb_fill_control_transfer( )</em>
 <em>ptr</em>: lightuserdata containing a pointer to at least <em>length</em> bytes of contiguous memory,<br>
 <em>timeout</em>: timeout in milliseconds (=0 for unlimited timeout).<br>
 <em>func</em>: the <a href="#transfer_callback">callback</a> function.<br>
-For host to device transfers ('<em>out</em>'), the memory pointed to by <em>ptr</em> must contain the <em>length</em> bytes of data to be transferred. For device to host transfers ('<em>in</em>'), up to <em>length</em> bytes of data will be received and store there, provided the transfer succeeds.<br>
-Rfr: <em>libusb_alloc_transfer( )</em>, <em>libusb_fill_interrupt_transfer( )</em>, <em>libusb_fill_bulk_transfer( )</em>, <em>libusb_fill_bulk_stream_transfer( )</em>, <em>libusb_submit_transfer( )</em>.</span></p>
+For host to device transfers ('<em>out</em>'), the memory pointed to by <em>ptr</em> must contain the <em>length</em> bytes of data to be transferred.<br>
+For device to host transfers ('<em>in</em>'), up to <em>length</em> bytes of data will be received and store there, provided the transfer succeeds.<br>
+Rfr: <em>libusb_fill_interrupt_transfer( )</em>, <em>libusb_fill_bulk_transfer( )</em>, <em>libusb_fill_bulk_stream_transfer( )</em>.</span></p>
 </li>
 <li>
 <p><em>transfer</em> = <a href="#devhandle"><em>devhandle</em></a>:<strong>submit_iso_transfer</strong>(<em>endpoint</em>, <em>ptr</em>, <em>length</em>, <em>num_iso_packets</em>, <em>iso_packet_length</em>, <em>timeout</em>, <em>func</em>)<br>
@@ -1312,9 +1321,10 @@ Rfr: <em>libusb_alloc_transfer( )</em>, <em>libusb_fill_interrupt_transfer( )</e
 <em>iso_packet_length</em>: the length of each isochronous packet.<br>
 <em>timeout</em>: timeout in milliseconds (=0 for unlimited timeout).<br>
 <em>func</em>: the <a href="#transfer_callback">callback</a> function.<br>
-For host to device transfers ('<em>out</em>'), the memory pointed to by <em>ptr</em> must contain the <em>length</em> bytes of data to be transferred, consisting of the concatenated packets. For device to host transfers ('<em>in</em>'), up to <em>length</em> bytes of data will be received and store there, provided the transfer succeeds. To locate the
-actually received packets, use the <em>transfer:<a href="#get_iso_packet_descriptors">get_iso_packet_descriptors</a>(&nbsp;)</em> method.<br>
-Rfr: <em>libusb_alloc_transfer( )</em>, <em>libusb_fill_iso_transfer( )</em>, <em>libusb_submit_transfer( )</em>.</span></p>
+For host to device transfers ('<em>out</em>'), the memory pointed to by <em>ptr</em> must contain the <em>length</em> bytes of data to be transferred, consisting of <em>num_iso_packets</em> concatenated packets of <em>iso_packet_length</em> bytes each.<br>
+For device to host transfers ('<em>in</em>'), up to <em>length</em> bytes of data will be received and store there, provided the transfer succeeds. To locate the
+actually received packets within the memory, use the <em>transfer:<a href="#get_iso_packet_descriptors">get_iso_packet_descriptors</a>(&nbsp;)</em> method.<br>
+Rfr: <em>libusb_fill_iso_transfer( )</em>.</span></p>
 </li>
 <li>
 <p><em>transfer</em>:<strong>cancel</strong>( )<br>
@@ -1411,28 +1421,22 @@ If it is not, then the <a href="#asynchapi">asynchronous I/O</a> API should be u
 <ul>
 <li>
 <p><em>transferred</em> = <a href="#devhandle"><em>devhandle</em></a>:<strong>control_transfer</strong>(<em>ptr</em>, <em>length</em>, <em>timeout</em>)<br>
-<span class="small">Perform a USB control transfer.<br>
+<span class="small">Perform a USB control transfer and returns the number of bytes of data actually transferred.<br>
 <em>ptr</em>: lightuserdata containing a pointer to at least <em>length</em> bytes of contiguous memory,<br>
 <em>timeout</em>: timeout in milliseconds (=0 for unlimited timeout).<br>
 The first 8 bytes pointed to by <em>ptr</em> must contain an encoded control setup packet, and the <em>length</em>
 of the memory area must be at least 8 + <em>wLength</em>.<br>
 The setup packet must be followed by the <em>wLength</em> bytes of data to be transferred to the device, or
 of space for the data to be received from the device.<br>
-On success, returns the number of bytes of data actually transferred.<br>
-On error, returns <em>nil</em>, <em>err</em> where <em>err</em> is one of the following: '<em>timeout</em>', '<em>pipe</em>', '<em>no device</em>', '<em>busy</em>', '<em>overflow</em>', '<em>invalid param</em>'.<br>
-For any other type of error raises a Lua error().<br>
 Rfr: <em>libusb_control_transfer( )</em>.</span></p>
 </li>
 <li>
 <p><em>transferred</em> = <a href="#devhandle"><em>devhandle</em></a>:<strong>bulk_transfer</strong>(<em>endpoint</em>, <em>ptr</em>, <em>length</em>, <em>timeout</em>)<br>
 <em>transferred</em> = <a href="#devhandle"><em>devhandle</em></a>:<strong>interrupt_transfer</strong>(<em>endpoint</em>, <em>ptr</em>, <em>length</em>, <em>timeout</em>)<br>
-<span class="small">Perform a USB bulk or interrupt transfer.<br>
+<span class="small">Perform a USB bulk or interrupt transfer and returns the number of bytes of data actually transferred.<br>
 <em>endpoint</em>: endpoint address,<br>
 <em>ptr</em>: lightuserdata containing a pointer to at least <em>length</em> bytes of contiguous memory,<br>
 <em>timeout</em>: timeout in milliseconds (=0 for unlimited timeout).<br>
-On success, returns the number of bytes of data actually transferred.<br>
-On error, returns <em>nil</em>, <em>err</em> where <em>err</em> is one of the following: '<em>timeout</em>', '<em>pipe</em>', '<em>no device</em>', '<em>busy</em>', '<em>overflow</em>', '<em>invalid param</em>'.<br>
-For any other type of error raises a Lua error().<br>
 Rfr: <em>libusb_bulk_transfer( )</em>, <em>libusb_interrupt_transfer( )</em>.</span></p>
 </li>
 </ul>
@@ -1864,6 +1868,10 @@ Values: '<em>per interface</em>', '<em>audio</em>', '<em>cdc</em>', '<em>hid</em
 <p><span class="small"><strong>direction</strong>: <em>libusb_endpoint_direction</em><br>
 Values: '<em>out</em>', '<em>in</em>'.</span></p>
 </div>
+<div id="errcode" class="paragraph">
+<p><span class="small"><strong>errcode</strong>: <em>libusb_error</em>, <em>libusb_transfer_status</em><br>
+Values: '<em>success</em>', '<em>io error</em>', '<em>invalid param</em>', '<em>access</em>', '<em>no device</em>', '<em>not found</em>', '<em>busy</em>', '<em>timeout</em>', '<em>overflow</em>', '<em>pipe</em>', '<em>interrupted</em>', '<em>no mem</em>', '<em>not supported</em>', '<em>other</em>', '<em>success</em>', '<em>error</em>', '<em>timeout</em>', '<em>cancelled</em>', '<em>stall</em>', '<em>no device</em>', '<em>overflow</em>'.</span></p>
+</div>
 <div id="hotplugevent" class="paragraph">
 <p><span class="small"><strong>hotplugevent</strong>: <em>libusb_hotplug_event + libusb_hotplug_flags</em><br>
 Values: '<em>attached</em>', '<em>detached</em>'.</span></p>
@@ -1906,7 +1914,7 @@ Values: '<em>control</em>', '<em>isochronous</em>', '<em>bulk</em>', '<em>interr
 </div>
 <div id="transferstatus" class="paragraph">
 <p><span class="small"><strong>transferstatus</strong>: <em>libusb_transfer_status</em><br>
-Values: '<em>completed</em>', '<em>error</em>', '<em>timed out</em>', '<em>cancelled</em>', '<em>stall</em>', '<em>no device</em>', '<em>overflow</em>'.</span></p>
+Values: '<em>completed</em>', '<em>error</em>', '<em>timeout</em>', '<em>cancelled</em>', '<em>stall</em>', '<em>no device</em>', '<em>overflow</em>'.</span></p>
 </div>
 <div id="type" class="paragraph">
 <p><span class="small"><strong>type</strong>: primitive type (char=8 bit, short=16 bit, int=32 bit, long=64 bit, float=32 bit, double=64 bit)<br>
