@@ -65,9 +65,15 @@ static int Get_endpoint(lua_State *L)
 static int Submit(lua_State *L, transfer_t *transfer, ud_t *ud)
     {
     int ec = libusb_submit_transfer(transfer);
-    CheckError(L, ec);
+    if(ec)
+        {
+        lua_pop(L, 1);
+        ud->destructor(L, ud);
+        CheckError(L, ec);
+        return 0;
+        }
     MarkSubmitted(ud);
-    return 0;
+    return 1;
     }
 
 static int Cancel(lua_State *L)
@@ -114,8 +120,7 @@ static int Submit_control_transfer(lua_State *L)
     transfer = (transfer_t*)ud->handle;
     Reference(L, 5, ud->ref1);
     libusb_fill_control_transfer(transfer, devhandle, ptr, Callback, NULL, timeout);
-    Submit(L, transfer, ud);
-    return 1;
+    return Submit(L, transfer, ud);
     }
 
 static int Submit_bulk_transfer(lua_State *L)
@@ -133,8 +138,7 @@ static int Submit_bulk_transfer(lua_State *L)
     Reference(L, 6, ud->ref1);
     libusb_fill_bulk_transfer(transfer, devhandle, endpoint, ptr, length,
             Callback, NULL, timeout);
-    Submit(L, transfer, ud);
-    return 1;
+    return Submit(L, transfer, ud);
     }
 
 static int Submit_bulk_stream_transfer(lua_State *L)
@@ -153,8 +157,7 @@ static int Submit_bulk_stream_transfer(lua_State *L)
     Reference(L, 7, ud->ref1);
     libusb_fill_bulk_stream_transfer(transfer, devhandle, endpoint, stream_id, ptr, length,
             Callback, NULL, timeout);
-    Submit(L, transfer, ud);
-    return 1;
+    return Submit(L, transfer, ud);
     }
 
 static int Submit_interrupt_transfer(lua_State *L)
@@ -172,8 +175,7 @@ static int Submit_interrupt_transfer(lua_State *L)
     Reference(L, 6, ud->ref1);
     libusb_fill_interrupt_transfer(transfer, devhandle, endpoint, ptr, length,
             Callback, NULL, timeout);
-    Submit(L, transfer, ud);
-    return 1;
+    return Submit(L, transfer, ud);
     }
 
 static int Submit_iso_transfer(lua_State *L)
@@ -195,8 +197,7 @@ static int Submit_iso_transfer(lua_State *L)
     libusb_set_iso_packet_lengths(transfer, iso_packet_length);
     libusb_fill_iso_transfer(transfer, devhandle, endpoint, ptr, length,
            num_iso_packets, Callback, NULL, timeout);
-    Submit(L, transfer, ud);
-    return 1;
+    return Submit(L, transfer, ud);
     }
 
 /*------ Utilities to be used in callbacks-------------------------------------*/
