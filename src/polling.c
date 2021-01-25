@@ -51,7 +51,6 @@ static int Handle_events(lua_State *L)
         ec = libusb_handle_events_timeout(context, &tv);
         }
     CheckError(L, ec);
-    ec = libusb_get_next_timeout(context, &tv);
     return 0;
     }
 
