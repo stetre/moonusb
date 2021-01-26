@@ -12,6 +12,8 @@ link:++http://www.lua.org/manual/5.4/++[5.4].
 
 * https://www.usb.org/documents[USB-IF Document Library] (USB specifications).
 
+* http://www.linux-usb.org/usb-ids.html[The USB ID Repository] (vendor ids, product ids, etc).
+
 * https://gitlab.com/wireshark/wireshark/-/wikis/CaptureSetup/USB[Wireshark USB CaptureSetup]
 (how to capture USB packets with Wireshark).
 
