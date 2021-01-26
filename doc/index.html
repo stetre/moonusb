@@ -1276,9 +1276,10 @@ Rfr: <em>libusb_hotplug_deregister_callback( )</em>.</span></p>
 <p>Asynchronous transfers are submitted using the <em>devhandle</em>:<strong>submit_xxx</strong>(&nbsp;) methods, that
 create and return a new <em>transfer</em> object.
 Each of these methods requires a function <em>func</em> as one of its arguments.
-This is the callback that will be executed,  as <strong>func(transfer, status)</strong>, when the
-transfer either completes, fails, or is canceled. The <em>transfer</em> object is automatically
-deleted as soon as the callback returns.</p>
+This is the callback that will be executed,  as <strong>boolean=func(transfer, status)</strong>, when the
+transfer either completes, fails, or is canceled.
+As the callback returns, if its return value is <em>nil</em> or <em>false</em>, then the <em>transfer</em> object is
+automatically deleted, otherwise it is automatically resubmitted.</p>
 </div>
 <div class="paragraph">
 <p><span class="small">Rfr: <em>libusb_alloc_transfer( )</em>, <em>libusb_fill_xxx_transfer( )</em>, <em>libusb_submit_transfer( )</em>.</span></p>

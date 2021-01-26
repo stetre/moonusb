@@ -62,15 +62,19 @@ static int Get_endpoint(lua_State *L)
     return 1;
     }
 
-static int Submit(lua_State *L, transfer_t *transfer, ud_t *ud)
+static int Submit(lua_State *L, transfer_t *transfer, ud_t *ud, int new_transfer)
     {
     int ec = libusb_submit_transfer(transfer);
-    if(ec)
+    switch(ec)
         {
-        lua_pop(L, 1);
-        ud->destructor(L, ud);
-        CheckError(L, ec);
-        return 0;
+        case LIBUSB_SUCCESS:        break;
+        case LIBUSB_ERROR_NO_DEVICE:
+        case LIBUSB_ERROR_BUSY:     break; /* this will be learned in the callback */
+        default: /* destroy the transfer object */
+            if(new_transfer) lua_pop(L, 1);
+            ud->destructor(L, ud);
+            CheckError(L, ec);
+            return 0;
         }
     MarkSubmitted(ud);
     return 1;
@@ -88,6 +92,7 @@ static int Cancel(lua_State *L)
 static void Callback(transfer_t *transfer)
     {
 #define L moonusb_L
+    int rc, resubmit;
     int top = lua_gettop(L);
     ud_t *ud = userdata(transfer);
     if(!ud) { unexpected(L); return; }
@@ -95,10 +100,15 @@ static void Callback(transfer_t *transfer)
     lua_rawgeti(L, LUA_REGISTRYINDEX, ud->ref1);
     pushtransfer(L, transfer);
     pushtransferstatus(L, transfer->status);
-    if(lua_pcall(L, 2, 0, 0)!=LUA_OK)
+    rc = lua_pcall(L, 2, 1, 0);
+    if(rc!=LUA_OK)
         { lua_error(L); return; }
+    resubmit = lua_toboolean(L, -1);
     lua_settop(L, top);
-    ud->destructor(L, ud);
+    if(resubmit)
+        Submit(L, transfer, ud, 0);
+    else
+        ud->destructor(L, ud);
     return;
 #undef L
     }
@@ -120,7 +130,7 @@ static int Submit_control_transfer(lua_State *L)
     transfer = (transfer_t*)ud->handle;
     Reference(L, 5, ud->ref1);
     libusb_fill_control_transfer(transfer, devhandle, ptr, Callback, NULL, timeout);
-    return Submit(L, transfer, ud);
+    return Submit(L, transfer, ud, 1);
     }
 
 static int Submit_bulk_transfer(lua_State *L)
@@ -138,7 +148,7 @@ static int Submit_bulk_transfer(lua_State *L)
     Reference(L, 6, ud->ref1);
     libusb_fill_bulk_transfer(transfer, devhandle, endpoint, ptr, length,
             Callback, NULL, timeout);
-    return Submit(L, transfer, ud);
+    return Submit(L, transfer, ud, 1);
     }
 
 static int Submit_bulk_stream_transfer(lua_State *L)
@@ -157,7 +167,7 @@ static int Submit_bulk_stream_transfer(lua_State *L)
     Reference(L, 7, ud->ref1);
     libusb_fill_bulk_stream_transfer(transfer, devhandle, endpoint, stream_id, ptr, length,
             Callback, NULL, timeout);
-    return Submit(L, transfer, ud);
+    return Submit(L, transfer, ud, 1);
     }
 
 static int Submit_interrupt_transfer(lua_State *L)
@@ -175,7 +185,7 @@ static int Submit_interrupt_transfer(lua_State *L)
     Reference(L, 6, ud->ref1);
     libusb_fill_interrupt_transfer(transfer, devhandle, endpoint, ptr, length,
             Callback, NULL, timeout);
-    return Submit(L, transfer, ud);
+    return Submit(L, transfer, ud, 1);
     }
 
 static int Submit_iso_transfer(lua_State *L)
@@ -197,7 +207,7 @@ static int Submit_iso_transfer(lua_State *L)
     libusb_set_iso_packet_lengths(transfer, iso_packet_length);
     libusb_fill_iso_transfer(transfer, devhandle, endpoint, ptr, length,
            num_iso_packets, Callback, NULL, timeout);
-    return Submit(L, transfer, ud);
+    return Submit(L, transfer, ud, 1);
     }
 
 /*------ Utilities to be used in callbacks-------------------------------------*/

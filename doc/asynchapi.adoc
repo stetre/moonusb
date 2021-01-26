@@ -12,9 +12,10 @@ This API needs an event loop. See the <<polling, polling>> section.
 Asynchronous transfers are submitted using the _devhandle_++:++*submit_xxx*(&nbsp;) methods, that
 create and return a new _transfer_ object.
 Each of these methods requires a function _func_ as one of its arguments.
-This is the callback that will be executed,  as *func(transfer, status)*, when the
-transfer either completes, fails, or is canceled. The _transfer_ object is automatically
-deleted as soon as the callback returns.
+This is the callback that will be executed,  as *boolean=func(transfer, status)*, when the
+transfer either completes, fails, or is canceled.
+As the callback returns, if its return value is _nil_ or _false_, then the _transfer_ object is
+automatically deleted, otherwise it is automatically resubmitted.
 
 [small]#Rfr: _libusb_alloc_transfer( )_, _libusb_fill_xxx_transfer( )_, _libusb_submit_transfer( )_.#
 
