@@ -1651,20 +1651,14 @@ The length of <em>data</em> must be a multiple of <a href="#datahandling_sizeof"
 <div id="encode_control_setup" class="ulist">
 <ul>
 <li>
-<p><strong>encode_control_setup</strong>(<em>ptr</em>, <em>setup</em>)<br>
-<em>setup</em> = <strong>decode_control_setup</strong>(<em>ptr</em>)<br>
+<p><strong>encode_control_setup</strong>(<em>ptr</em>, <a href="#setup"><em>setup</em></a>)<br>
+<em>bstring</em> = <strong>encode_control_setup</strong>(<em>nil</em>, <a href="#setup"><em>setup</em></a>)<br>
+<a href="#setup"><em>setup</em></a> = <strong>decode_control_setup</strong>(<em>ptr</em>)<br>
+<a href="#setup"><em>setup</em></a> = <strong>decode_control_setup</strong>(<em>bstring</em>)<br>
 <span class="small">Encode/decode a Setup packet for control transfers.<br>
-The packet is encoded to / decoded from the first 8 bytes pointed by <em>ptr</em>.<br>
+The packet is encoded to / decoded from the first 8 bytes pointed by <em>ptr</em>, or of the binary string <em>bstring</em>.<br>
 <em>ptr</em>: a lightuserdata containing a pointer to at least 8 bytes of memory,<br>
-<em>setup</em>: a table with the following fields:<br>
-- <em>setup.request_type</em>: <a href="#requesttype">requesttype</a>,<br>
-- <em>setup.request_recipient</em>: <a href="#requestrecipient">requestrecipient</a>,<br>
-- <em>setup.direction</em>: <a href="#direction">direction</a>,<br>
-- <em>setup.request</em>: <a href="#standardrequest">standardrequest</a> or integer (if <em>request_type</em> is not '<em>standard</em>'),<br>
-- <em>setup.value</em>: integer,<br>
-- <em>setup.index</em>: integer,<br>
-- <em>setup.length</em>: integer.<br>
-Rfr: <a href="http://libusb.sourceforge.net/api-1.0/structlibusb__control__setup.html">libusb_control_setup struct</a>.</span></p>
+<em>bstring</em>: a binary string with length greater or equal to 8.</span></p>
 </li>
 </ul>
 </div>
@@ -1830,6 +1824,23 @@ previously obtained with the <a href="#now">now</a>(&nbsp;) function.</span></p>
 	<em>data</em> = binary string (<em>capability dependent data, see USB 3.2 Specification Table 9-13</em>),<br>
 }
 (rfr: <a href="http://libusb.sourceforge.net/api-1.0/structlibusb__bos__dev__capability__descriptor.html">libusb_bos_dev_capability_descriptor</a>)</span></p>
+</li>
+</ul>
+</div>
+<hr>
+<div class="ulist">
+<ul>
+<li>
+<p><a id="setup"></a>
+<span class="small"><strong>setup</strong> = {<br>
+	<em>request_type</em> = <a href="#requesttype">requesttype</a>,<br>
+	<em>request_recipient</em> = <a href="#requestrecipient">requestrecipient</a>,<br>
+	<em>direction</em> = <a href="#direction">direction</a>,<br>
+	<em>request</em> = <a href="#standardrequest">standardrequest</a> or integer (if <em>request_type</em> is not '<em>standard</em>'),<br>
+	<em>value</em> = integer,<br>
+	<em>index</em> = integer,<br>
+	<em>length</em> = integer.<br>
+} (rfr: <a href="http://libusb.sourceforge.net/api-1.0/structlibusb__control__setup.html">libusb_control_setup struct</a>)</span></p>
 </li>
 </ul>
 </div>

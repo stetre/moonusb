@@ -212,18 +212,46 @@ static int Submit_iso_transfer(lua_State *L)
 
 /*------ Utilities to be used in callbacks-------------------------------------*/
 
+static int Encode_control_setup_string(lua_State *L)
+    {
+    struct libusb_control_setup dst;
+    checkcontrolsetup(L, 2, &dst);
+    lua_pushlstring(L, (char*)&dst, sizeof(struct libusb_control_setup));
+    return 1;
+    }
+
 static int Encode_control_setup(lua_State *L)
     {
-    unsigned char *ptr = (unsigned char*)checklightuserdata(L, 1);
-    struct libusb_control_setup *dst = (struct libusb_control_setup*)ptr;
+    const char *ptr;
+    struct libusb_control_setup *dst;
+    if(lua_isnil(L, 1))
+        return Encode_control_setup_string(L);
+    ptr = checklightuserdata(L, 1);
+    dst = (struct libusb_control_setup*)ptr;
     checkcontrolsetup(L, 2, dst);
     return 0;
     }
 
+static int Decode_control_setup_string(lua_State *L)
+    {
+    size_t len;
+    struct libusb_control_setup s;
+    const char *ptr = luaL_checklstring(L, 1, &len);
+    if(len < sizeof(struct libusb_control_setup))
+        return argerror(L, 1, ERR_LENGTH);
+    memcpy(&s, ptr, sizeof(struct libusb_control_setup));
+    pushcontrolsetup(L, &s);
+    return 1;
+    }
+
 static int Decode_control_setup(lua_State *L)
     {
-    unsigned char *ptr = (unsigned char*)checklightuserdata(L, 1);
-    struct libusb_control_setup *s = (struct libusb_control_setup*)ptr;
+    const char *ptr;
+    struct libusb_control_setup *s;
+    if(lua_isstring(L, 1))
+        return Decode_control_setup_string(L);
+    ptr = checklightuserdata(L, 1);
+    s = (struct libusb_control_setup*)ptr;
     pushcontrolsetup(L, s);
     return 1;
     }

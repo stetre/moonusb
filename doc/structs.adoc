@@ -82,3 +82,16 @@ _capability_: {<<bosdevcapabilitydescriptor, bosdevcapabilitydescriptor>>}, +
 } 
 (rfr: link:++http://libusb.sourceforge.net/api-1.0/structlibusb__bos__dev__capability__descriptor.html++[libusb_bos_dev_capability_descriptor])#
 
+'''
+
+* [[setup]]
+[small]#*setup* = { +
+	_request_type_ = <<requesttype, requesttype>>, +
+	_request_recipient_ = <<requestrecipient, requestrecipient>>, +
+	_direction_ = <<direction, direction>>, +
+	_request_ = <<standardrequest, standardrequest>> or integer (if _request_type_ is not '_standard_'), +
+	_value_ = integer, +
+	_index_ = integer, +
+	_length_ = integer. +
+} (rfr: link:++http://libusb.sourceforge.net/api-1.0/structlibusb__control__setup.html++[libusb_control_setup struct])#
+

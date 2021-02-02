@@ -49,3 +49,10 @@ test(vendor_setup)
 
 mem:free()
 
+print("--------------")
+-- Encoding/decoding to/from binary string
+local b = string.pack('I1I1I1I1I1I1I1I1', 0x81, 0x06, 0x00, 0x22, 0x00, 0x00, 0x34, 0x00)
+local s = usb.decode_control_setup(b)
+for k,v in pairs(s) do print(k, v) end
+local b1 = usb.encode_control_setup(nil, s)
+assert(b1 == b)

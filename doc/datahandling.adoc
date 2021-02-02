@@ -34,18 +34,12 @@ and returns the extracted values in a flat table. +
 The length of _data_ must be a multiple of <<datahandling_sizeof, sizeof>>(_type_).#
 
 [[encode_control_setup]]
-* *encode_control_setup*(_ptr_, _setup_) +
-_setup_ = *decode_control_setup*(_ptr_) +
+* *encode_control_setup*(_ptr_, <<setup, _setup_>>) +
+_bstring_ = *encode_control_setup*(_nil_, <<setup, _setup_>>) +
+<<setup, _setup_>> = *decode_control_setup*(_ptr_) +
+<<setup, _setup_>> = *decode_control_setup*(_bstring_) +
 [small]#Encode/decode a Setup packet for control transfers. +
-The packet is encoded to / decoded from the first 8 bytes pointed by _ptr_. +
+The packet is encoded to / decoded from the first 8 bytes pointed by _ptr_, or of the binary string _bstring_. +
 _ptr_: a lightuserdata containing a pointer to at least 8 bytes of memory, +
-_setup_: a table with the following fields: +
-pass:[-] _setup.request_type_: <<requesttype, requesttype>>, +
-pass:[-] _setup.request_recipient_: <<requestrecipient, requestrecipient>>, +
-pass:[-] _setup.direction_: <<direction, direction>>, +
-pass:[-] _setup.request_: <<standardrequest, standardrequest>> or integer (if _request_type_ is not '_standard_'), +
-pass:[-] _setup.value_: integer, +
-pass:[-] _setup.index_: integer, +
-pass:[-] _setup.length_: integer. +
-Rfr: link:++http://libusb.sourceforge.net/api-1.0/structlibusb__control__setup.html++[libusb_control_setup struct].#
+_bstring_: a binary string with length greater or equal to 8.#
 
