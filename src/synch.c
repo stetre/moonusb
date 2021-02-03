@@ -60,7 +60,7 @@ static int Func(lua_State *L)                                           \
     int length = luaL_checkinteger(L, 4);                               \
     unsigned int timeout = luaL_checkinteger(L, 5);                     \
     ec = func(devhandle, endpoint, ptr, length, &transferred, timeout); \
-    CheckError(L, ec);                                     				\
+    CheckError(L, ec);                                                  \
     lua_pushinteger(L, transferred);                                    \
     return 1;                                                           \
     }

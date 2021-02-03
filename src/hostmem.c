@@ -74,7 +74,11 @@ static ud_t *newhostmem(lua_State *L, hostmem_t* hostmem, devhandle_t *devhandle
     ud_t *ud;
     ud = newuserdata(L, hostmem, HOSTMEM_MT, "hostmem");
     ud->destructor = freehostmem;
-    ud->parent_ud = devhandle ? userdata(devhandle) : NULL;
+    if(devhandle)
+        {
+        ud->parent_ud = userdata(devhandle);
+        ud->context = userdata(devhandle)->context;
+        }
     return ud;
     }
 

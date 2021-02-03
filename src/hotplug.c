@@ -28,9 +28,10 @@
 static int freehotplug(lua_State *L, ud_t *ud)
     {
     hotplug_t *hotplug = (hotplug_t*)ud->handle;
+    context_t *context = ud->context;
 //  freechildren(L, _MT, ud);
     if(!freeuserdata(L, ud, "hotplug")) return 0;
-    libusb_hotplug_deregister_callback(hotplug->context, hotplug->cb_handle);
+    libusb_hotplug_deregister_callback(context, hotplug->cb_handle);
     Free(L, hotplug);
     return 0;
     }
@@ -80,10 +81,10 @@ static int Hotplug_register(lua_State *L)
         return argerror(L, 3, ERR_FUNCTION);
     Reference(L, 3, ref);
     hotplug = Malloc(L, sizeof(hotplug_t));
-    hotplug->context = context;
     ud = newuserdata(L, hotplug, HOTPLUG_MT, "hotplug");
     ud->parent_ud = userdata(context);
     ud->destructor = freehotplug;
+    ud->context = context;
     ud->ref1 = ref;
     /* Note: if the LIBUSB_HOTPLUG_ENUMERATE flag is set, the callback is executed
      * repeatedly (once per attached device) before the register function returns, so

@@ -47,6 +47,7 @@ int newinterface(lua_State *L, devhandle_t *devhandle, int interface_number)
     interface->number = interface_number;
     ud = newuserdata(L, interface, INTERFACE_MT, "interface");
     ud->parent_ud = userdata(devhandle);
+    ud->context = userdata(devhandle)->context;
     ud->destructor = freeinterface;
     CancelClaimed(ud);
     ec = libusb_claim_interface(interface->devhandle, interface->number);

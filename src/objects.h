@@ -40,7 +40,6 @@
 
 typedef struct {
     libusb_hotplug_callback_handle cb_handle; /* this is unique per context */
-    context_t *context;
 } moonusb_hotplug_t;
 
 typedef struct {
@@ -71,6 +70,7 @@ struct moonusb_ud_s {
     void *handle; /* the object handle bound to this userdata */
     int (*destructor)(lua_State *L, ud_t *ud);  /* self destructor */
     ud_t *parent_ud; /* the ud of the parent object */
+    context_t *context;
     uint32_t marks;
     int ref1, ref2, ref3, ref4; /* refs for callbacks, automatically unreferenced at destruction */
     void *info; /* object specific info (ud_info_t, subject to Free() at destruction, if not NULL) */

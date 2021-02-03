@@ -44,6 +44,7 @@ static ud_t *newtransfer(lua_State *L, int iso_packets, devhandle_t *devhandle)
     if(!transfer) { luaL_error(L, "libusb_alloc_transfer() failed"); return NULL; }
     ud = newuserdata(L, transfer, TRANSFER_MT, "transfer");
     ud->parent_ud = userdata(devhandle);
+    ud->context = userdata(devhandle)->context;
     ud->destructor = freetransfer;
     return ud;
     }

@@ -41,6 +41,7 @@ int newdevhandle(lua_State *L, device_t *device, devhandle_t *devhandle)
     ud_t *ud;
     ud = newuserdata(L, devhandle, DEVHANDLE_MT, "devhandle");
     ud->parent_ud = userdata(device);
+    ud->context = userdata(device)->context;
     ud->destructor = freedevhandle;
     // Automatically detach the kernel driver when an interface is claimed,
     // and re-attach it when the interface is released (only relevant on linux):
@@ -142,13 +143,11 @@ static int Reset_device(lua_State *L)
 static int Get_bos_descriptor(lua_State *L)
     {
     ud_t *ud;
-    context_t *context;
     devhandle_t *devhandle = checkdevhandle(L, 1, &ud);
     struct libusb_bos_descriptor *bos;
     int ec = libusb_get_bos_descriptor(devhandle, &bos);
     CheckError(L, ec);
-    context = (context_t*)(ud->parent_ud->parent_ud->handle);
-    pushbosdescriptor(L, bos, context);
+    pushbosdescriptor(L, bos, ud->context);
     libusb_free_bos_descriptor(bos);
     return 1;
     }

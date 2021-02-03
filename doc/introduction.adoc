@@ -17,11 +17,11 @@ structs in libusb, if any:
 [small]#<<context, context>> _(libusb_context)_ +
 {tH}<<hotplug, hotplug>> _(libusb_hotplug_callback_handle)_ +
 {tH}<<device, device>> _(libusb_device)_ +
-{tI}{tL}<<device, devhandle>> _(libusb_device_handle)_ +
-{tI}{tS}{tH}<<device, interface>> _(libusb_device_handle + interface number)_ +
-{tI}{tS}{tH}<<asynchapi, transfer>> _(libusb_transfer)_ +
-{tI}{tS}{tL}<<hostmem, hostmem>> _(none)_ +
-{tL}<<hostmem, hostmem>> _(none)_#
+{tL}{tL}<<device, devhandle>> _(libusb_device_handle)_ +
+{tS}{tS}{tH}<<device, interface>> _(libusb_device_handle + interface number)_ +
+{tS}{tS}{tH}<<asynchapi, transfer>> _(libusb_transfer)_ +
+{tS}{tS}{tL}<<hostmem, hostmem>> _(none)_ +
+<<hostmem, hostmem>> _(none)_#
 
 The <<hostmem, hostmem>> object is a MoonUSB-specific object that encapsulates a memory
 area, to be (optionally) used as memory buffer in transfer functions. It is listed twice

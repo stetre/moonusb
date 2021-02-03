@@ -42,6 +42,7 @@ int newdevice(lua_State *L, context_t *context, device_t *device)
     libusb_ref_device(device);
     ud = newuserdata(L, device, DEVICE_MT, "device");
     ud->parent_ud = userdata(context);
+    ud->context = context;
     ud->destructor = freedevice;
     return 1;
     }
@@ -103,7 +104,7 @@ static int Get_parent(lua_State *L)
     if(parent)
         {
         if(!userdata(parent)) /* unknown device: create it */
-            newdevice(L, (context_t*)ud->handle, parent);
+            newdevice(L, ud->context, parent);
         else
             pushdevice(L, parent);
         }
@@ -149,7 +150,7 @@ static int Get_device_descriptor(lua_State *L)
     device_t *device = checkdevice(L, 1, &ud);
     int ec = libusb_get_device_descriptor(device, &desc);
     CheckError(L, ec);
-    pushdevicedescriptor(L, &desc, device, (context_t*)userdata(ud->parent_ud));
+    pushdevicedescriptor(L, &desc, device, ud->context);
     return 1;
     }
 
@@ -158,10 +159,9 @@ static int Get_active_config_descriptor(lua_State *L)
     ud_t *ud;
     struct libusb_config_descriptor *desc;
     device_t *device = checkdevice(L, 1, &ud);
-    context_t *context = (context_t*)ud->parent_ud->handle;
     int ec = libusb_get_active_config_descriptor(device, &desc);
     CheckError(L, ec);
-    pushconfigdescriptor(L, desc, context);
+    pushconfigdescriptor(L, desc, ud->context);
     libusb_free_config_descriptor(desc);
     return 1;
     }
@@ -172,11 +172,10 @@ static int Func(lua_State *L)                               \
     ud_t *ud;                                               \
     struct libusb_config_descriptor *desc;                  \
     device_t *device = checkdevice(L, 1, &ud);              \
-    context_t *context = (context_t*)ud->parent_ud->handle; \
     uint8_t val = luaL_checkinteger(L, 2);                  \
     int ec = func(device, val, &desc);                      \
     CheckError(L, ec);                                      \
-    pushconfigdescriptor(L, desc, context);                 \
+    pushconfigdescriptor(L, desc, ud->context);             \
     libusb_free_config_descriptor(desc);                    \
     return 1;                                               \
     }
