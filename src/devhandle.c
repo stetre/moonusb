@@ -28,11 +28,14 @@
 static int freedevhandle(lua_State *L, ud_t *ud)
     {
     devhandle_t *devhandle = (devhandle_t*)ud->handle;
+    context_t *context = ud->context;
     freechildren(L, HOSTMEM_MT, ud);
     freechildren(L, TRANSFER_MT, ud);
     freechildren(L, INTERFACE_MT, ud);
     if(!freeuserdata(L, ud, "devhandle")) return 0;
+    libusb_lock_events(context);
     libusb_close(devhandle);
+    libusb_unlock_events(context);
     return 0;
     }
 
