@@ -63,6 +63,7 @@ int luaopen_moonusb(lua_State *L)
     /* Add functions implemented in Lua */
     lua_pushvalue(L, -1); lua_setglobal(L, "moonusb");
     if(luaL_dostring(L, "require('moonusb.bosdescriptors')") != 0) lua_error(L);
+    if(luaL_dostring(L, "require('moonusb.utils')") != 0) lua_error(L);
     lua_pushnil(L);  lua_setglobal(L, "moonusb");
 
     return 1;
