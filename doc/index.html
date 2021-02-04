@@ -800,9 +800,15 @@ p.tableblock.header { color: #6d6e71; }
 <li><a href="#hostmem">Host memory</a></li>
 <li><a href="#datahandling">Data handling</a></li>
 <li><a href="#miscellanea">Miscellanea</a></li>
-<li><a href="#emulator">Device emulation</a></li>
 <li><a href="#structs">Structs</a></li>
 <li><a href="#enums">Enums</a></li>
+<li><a href="#emulator">Emulating USB devices</a>
+<ul class="sectlevel2">
+<li><a href="#_overview">Overview</a></li>
+<li><a href="#emulator_api">Emulator API</a></li>
+<li><a href="#_emulator_usage">Emulator usage</a></li>
+</ul>
+</li>
 <li><a href="#links">Useful links</a></li>
 </ul>
 </div>
@@ -1732,14 +1738,6 @@ previously obtained with the <a href="#now">now</a>(&nbsp;) function.</span></p>
 </div>
 </div>
 <div class="sect1">
-<h2 id="emulator">Device emulation</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>@@ TODO: doc for the moonusb.emulator module</p>
-</div>
-</div>
-</div>
-<div class="sect1">
 <h2 id="structs">Structs</h2>
 <div class="sectionbody">
 <div class="ulist">
@@ -1944,6 +1942,311 @@ Values: '<em>char</em>', '<em>uchar</em>', '<em>short</em>', '<em>ushort</em>', 
 </div>
 </div>
 <div class="sect1">
+<h2 id="emulator">Emulating USB devices</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This section describes the optional <strong>moonusb.emulator</strong> module, that can be loaded with:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="pygments highlight"><code data-lang="lua"> <span class="tok-kd">local</span> <span class="tok-n">emulator</span> <span class="tok-o">=</span> <span class="tok-nb">require</span><span class="tok-p">(</span><span class="tok-s2">&quot;moonusb.emulator&quot;</span><span class="tok-p">)</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The module uses Diego Nehab&#8217;s
+<a href="http://w3.impa.br/~diego/software/luasocket/">LuaSocket</a> (required) and the
+<a href="https://github.com/stetre/moontimers">MoonTimers</a> module from the MoonLibs collection (optional).</p>
+</div>
+<div class="sect2">
+<h3 id="_overview">Overview</h3>
+<div class="paragraph">
+<p>The purpose of libusb, and hence of MoonUSB, is to implement USB user applications.
+That is, applications that use USB devices. MoonUSB however provides an additonal - and
+experimental - submodule named <strong>moonusb.emulator</strong> to emulate USB devices. The emulation
+leverages the <a href="http://usbip.sourceforge.net/">USB/IP</a> framework, which should be
+available by default on most GNU/Linux systems.</p>
+</div>
+<div class="paragraph">
+<p>The <strong>original goal of USB/IP</strong> is to allow applications to access USB devices that are plugged
+into a remote host, as if they were plugged into the local host. This is achieved as follows:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>on the remote host, a TCP server implements the
+<a href="https://www.kernel.org/doc/Documentation/usb/usbip_protocol.txt">USB/IP protocol</a> (server-side) to
+make USB devices plugged into that host available for export to clients that request them;</p>
+</li>
+<li>
+<p>on the local host, a USB/IP client - usually the <a href="https://www.mankier.com/8/usbip">usbip</a> tool -
+can then connect to the remote server, list the available devices, possibly import one
+or more of them and send them USB requests over the connection. The server relays the client&#8217;s
+requests to the remote devices and their responses back to the client over the TCP connection.
+If the <em>usbip</em> tool is used, once it has imported a device it handles the connection to the
+<a href="https://sourceforge.net/p/usb-vhci/wiki/Home/">VHCI</a> driver, which in turns makes the device
+available to user applications in the same way that real USB devices plugged in locally are
+made available by their drivers.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Even if it is not its original goal, USB/IP can be used also to <strong>emulate a USB device</strong>. This is
+what the <em>moonusb.emulator</em> module does: it implements a USB/IP server that runs locally and
+exports a fake USB device, as opposed to running remotely to export real devices (the emulation
+server could also run remotely, but I&#8217;m not sure USB/IP is safe enough to advise it).</p>
+</div>
+<div class="paragraph">
+<p>Since there are gazillions of USB device types out there, in order to fake a particular device
+the emulator module has to be customized by a <strong>user script</strong>.
+The emulator module implements the core, device-independent parts of the server: it manages
+the TCP connection, the reception and delivery of data over it, and encodes/decodes USB/IP
+protocol messages. The user script, on the other hand, is responsible for configuring
+the module and for implementing the device-specific parts of the emulation.
+Loosely speaking, the emulator module implements the USB/IP protocol (server-side),
+while the <strong>user script</strong> implements the USB protocol (device-side) on top of
+the <a href="#emulator_api">emulator API</a> described in a later section.</p>
+</div>
+<div class="paragraph">
+<p>The code snippet below shows the skeleton of a user script. More complete
+(and working) examples can be found in the <strong>examples/</strong> directory.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="pygments highlight"><code data-lang="lua"> <span class="tok-c1">-- Script: myfakedevice.lua</span>
+ <span class="tok-kd">local</span> <span class="tok-n">emulator</span> <span class="tok-o">=</span> <span class="tok-nb">require</span><span class="tok-p">(</span><span class="tok-s2">&quot;moonusb.emulator&quot;</span><span class="tok-p">)</span>
+ <span class="tok-c1">-- local timers = require(&quot;moontimers&quot;) -- optional</span>
+
+ <span class="tok-kd">local</span> <span class="tok-kr">function</span> <span class="tok-nf">attached</span><span class="tok-p">()</span>
+    <span class="tok-c1">-- callback executed when the device has been attached</span>
+ <span class="tok-kr">end</span>
+
+ <span class="tok-kd">local</span> <span class="tok-kr">function</span> <span class="tok-nf">detached</span><span class="tok-p">()</span>
+    <span class="tok-c1">-- callback executed when the device has been detached</span>
+ <span class="tok-kr">end</span>
+
+ <span class="tok-kd">local</span> <span class="tok-kr">function</span> <span class="tok-nf">receive_submit</span><span class="tok-p">(</span><span class="tok-n">submit</span><span class="tok-p">)</span>
+    <span class="tok-c1">-- callback executed when a &#39;submit&#39; command has been received</span>
+    <span class="tok-c1">-- ... process the command and prepare the response ...</span>
+    <span class="tok-n">emulator</span><span class="tok-p">.</span><span class="tok-n">send_submit_response</span><span class="tok-p">(</span><span class="tok-n">submit</span><span class="tok-p">,</span> <span class="tok-n">status</span><span class="tok-p">,</span> <span class="tok-n">error_count</span><span class="tok-p">,</span> <span class="tok-n">data</span><span class="tok-p">)</span>
+ <span class="tok-kr">end</span>
+
+ <span class="tok-kd">local</span> <span class="tok-kr">function</span> <span class="tok-nf">receive_unlink</span><span class="tok-p">(</span><span class="tok-n">unlink</span><span class="tok-p">)</span>
+    <span class="tok-c1">-- callback executed when a &#39;unlink&#39; command has been received</span>
+    <span class="tok-c1">-- ... process the command and prepare the response ...</span>
+    <span class="tok-n">emulator</span><span class="tok-p">.</span><span class="tok-n">send_unlink_response</span><span class="tok-p">(</span><span class="tok-n">unlink</span><span class="tok-p">,</span> <span class="tok-n">status</span><span class="tok-p">)</span>
+ <span class="tok-kr">end</span>
+
+ <span class="tok-c1">-- Configure the emulator and start the emulation</span>
+ <span class="tok-n">emulator</span><span class="tok-p">.</span><span class="tok-n">start</span><span class="tok-p">({</span>
+    <span class="tok-c1">-- ... --</span>
+    <span class="tok-n">busnum</span> <span class="tok-o">=</span> <span class="tok-mi">4</span><span class="tok-p">,</span>
+    <span class="tok-n">devnum</span> <span class="tok-o">=</span> <span class="tok-mi">5</span><span class="tok-p">,</span>
+    <span class="tok-n">vendor_id</span> <span class="tok-o">=</span> <span class="tok-mh">0x1234</span><span class="tok-p">,</span>
+    <span class="tok-n">product_id</span> <span class="tok-o">=</span> <span class="tok-mh">0x5678</span><span class="tok-p">,</span>
+    <span class="tok-c1">-- ... --</span>
+    <span class="tok-n">attached</span> <span class="tok-o">=</span> <span class="tok-n">attached</span><span class="tok-p">,</span>
+    <span class="tok-n">detached</span> <span class="tok-o">=</span> <span class="tok-n">detached</span><span class="tok-p">,</span>
+    <span class="tok-n">receive_submit</span> <span class="tok-o">=</span> <span class="tok-n">receive_submit</span><span class="tok-p">,</span>
+    <span class="tok-n">receive_unlink</span> <span class="tok-o">=</span> <span class="tok-n">receive_unlink</span><span class="tok-p">,</span>
+ <span class="tok-p">})</span></code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="emulator_api">Emulator API</h3>
+<div class="paragraph">
+<p>This section describes the API exposed by the <strong>moonusb.emulator</strong> module to the
+user scripts that implement emulators for particular devices.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>emulator.start</strong>(<em>cfg</em>)<br>
+<span class="small">Configure the emulator and start the emulation.<br>
+<em>cfg</em>: <a href="#emulatorconfig">emulatorconfig</a>.</span></p>
+</li>
+<li>
+<p><strong>attached</strong>( ) <em>callback</em><br>
+<strong>detached</strong>( ) <em>callback</em><br>
+<span class="small">Signature for the <em>cfg.attached</em> and <em>cfg.detached</em> callbacks.<br>
+These callbacks are executed respectively when the fake device is attached (that
+is, imported by a client), and when it is detached (that is, the connection is
+closed either intentionally or due to an error).</span></p>
+</li>
+<li>
+<p><strong>receive_submit</strong>(<a href="#submit"><em>submit</em></a>) <em>callback</em><br>
+<strong>receive_unlink</strong>(<a href="#unlink"><em>unlink</em></a>) <em>callback</em><br>
+<span class="small">Signatures for the <em>cfg.receive_submit</em> and <em>cfg.receive_unlink</em> callbacks.<br>
+These callbacks are executed respectively when a USBIP_CMD_SUBMIT or a USBIP_CMD_UNLINK
+message is received on the connection in attached state. The user is expected to process
+the message, and possibly send a response using the <em>send_xxx_response(&nbsp;)</em> functions
+described below.<br>
+Rfr: <a href="https://www.kernel.org/doc/Documentation/usb/usbip_protocol.txt">USBIP_CMD_SUBMIT, USBIP_CMD_UNLINK</a>.</span></p>
+</li>
+<li>
+<p><strong>emulator.send_submit_response</strong>(<a href="#submit"><em>submit</em></a>, <em>status</em>, <em>error_count</em>, [<em>data</em>])<br>
+<strong>emulator.send_unlink_response</strong>(<a href="#unlink"><em>unlink</em></a>, <em>status</em>)<br>
+<span class="small">Respectively send a USBIP_RET_SUBMIT or a USBIP_RET_UNLINK response.<br>
+The first argument is the table received in the corresponding <em>receive_xxx(&nbsp;)</em> callback, unchanged.<br>
+<em>status</em>: signed integer, 0 for success, otherwise an error code.<br>
+<em>error_count</em>: integer.<br>
+<em>data</em>: binary string containing the data to be transferred, or <em>nil</em> if none.<br>
+(I presume that the error codes are from &lt;errno.h&gt;, but I am not sure. Neither am I sure
+about the meaning of the error count. The USB/IP specification is vague, to say the least.)<br>
+Rfr: <a href="https://www.kernel.org/doc/Documentation/usb/usbip_protocol.txt">USBIP_RET_SUBMIT, USBIP_RET_UNLINK</a>.</span></p>
+</li>
+</ul>
+</div>
+<hr>
+<div class="paragraph">
+<p><strong>Structs</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a id="emulatorconfig"></a>
+<span class="small"><strong>emulatorconfig</strong> = {<br>
+<em>usbip_ver</em>: string (opt. USB/P bcd version, defaults to '<em>01.11</em>'),<br>
+<em>ip</em>: string (opt. IP address, defaults to '<em>localhost</em>'),<br>
+<em>port</em>: integer (opt. TCP port, defaults to 3240),<br>
+<em>busnum</em>: integer (opt., defaults to 1),<br>
+<em>devnum</em>: integer (opt., defaults to 1),<br>
+<em>path</em>: string (opt., defaults to '<em>moonusb emulated device</em>'),<br>
+<em>vendor_id</em>: integer (opt., defaults to 0x0000),<br>
+<em>product_id</em>: integer (opt., defaults to 0x0000),<br>
+<em>release_number</em>: string (opt. bcd device version, defaults to '<em>00.00</em>'),<br>
+<em>speed</em>: <a href="#speed">speed</a> (opt., defaults to '<em>high</em>'),<br>
+<em>device_class</em>: <a href="#class">class</a> (opt., defaults to '<em>per interface</em>'),<br>
+<em>device_subclass</em>: integer (opt., defaults to 0),<br>
+<em>device_protocol</em>: integer (opt., defaults to 0),<br>
+<em>configuration_value</em>: integer (opt., defaults to 1),<br>
+<em>num_configurations</em>: integer (opt., defaults to 1),<br>
+<em>interfaces</em>: {{ <em>class</em>=<a href="#class">class</a>, <em>subclass</em>=integer, <em>protocol</em>=integer }},<br>
+<em>attached</em>: function (opt. callback, see signature above),<br>
+<em>detached</em>: function (opt. callback, see signature above),<br>
+<em>receive_submit</em>: function (callback, see signature above),<br>
+<em>receive_unlink</em>: function (callback, see signature above),<br>
+} (rfr: <a href="https://www.kernel.org/doc/Documentation/usb/usbip_protocol.txt">OP_REQ_DEVLIST</a>)</span></p>
+</li>
+<li>
+<p><a id="submit"></a>
+<span class="small"><strong>submit</strong> = {<br>
+<em>seqnum</em>: integer,<br>
+<em>devid</em>: integer,<br>
+<em>direction</em>: <a href="#direction">direction</a>,<br>
+<em>ep</em>: integer,<br>
+<em>transfer_flags</em>: integer,<br>
+<em>transfer_buffer_length</em>: integer,<br>
+<em>start_frame</em>: integer,<br>
+<em>number_of_packets</em>: integer,<br>
+<em>interval</em>: integer,<br>
+<em>setup</em>: binary strings (8 bytes long),<br>
+<em>data</em>: binary string or <em>nil</em>,<br>
+} (rfr: <a href="https://www.kernel.org/doc/Documentation/usb/usbip_protocol.txt">USBIP_CMD_SUBMIT</a>)</span></p>
+</li>
+<li>
+<p><a id="unlink"></a>
+<span class="small"><strong>unlink</strong> = {<br>
+<em>seqnum</em>: integer,<br>
+<em>devid</em>: integer,<br>
+<em>direction</em>: <a href="#direction">direction</a>,<br>
+<em>ep</em>: integer,<br>
+<em>victim_seqnum</em>: integer,<br>
+} (rfr: <a href="https://www.kernel.org/doc/Documentation/usb/usbip_protocol.txt">USBIP_CMD_UNLINK</a>)</span></p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_emulator_usage">Emulator usage</h3>
+<div class="paragraph">
+<p>This section shows how to run a device emulation. It is assumed that the emulator
+is implemented in a user script named <strong>myfakedevice.lua</strong>, and a client application
+(using that particular USB device) is implemented in a script named <strong>myclient.lua</strong>.</p>
+</div>
+<div class="paragraph">
+<p>First of all, ensure that the needed kernel modules are loaded:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="pygments highlight"><code data-lang="bash"> $ sudo modprobe usbip-core
+ $ sudo modprobe vhci-hcd</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Then, launch the emulator:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="pygments highlight"><code data-lang="bash"> $ lua myfakedevice.lua</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The emulator will open a TCP socket on the specified port and wait for clients to connect.</p>
+</div>
+<div class="paragraph">
+<p>From another shell, list the devices exported by the script, using the
+<a href="https://www.mankier.com/8/usbip">usbip</a> tool:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="pygments highlight"><code data-lang="bash"> $ usbip list -r <span class="tok-m">127</span>.0.0.1</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This command should list a single device, and indicate "4-5" as its <em>busid</em> (assuming
+<em>busnum</em>=4 and <em>devnum</em>=5). Import the device, again with the usbip tool:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="pygments highlight"><code data-lang="bash"> $ sudo usbip attach -r <span class="tok-m">127</span>.0.0.1 -b <span class="tok-m">4</span>-5</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This should start the configuration of the device, with the vhci driver issuing commands
+(get descriptor, etc) and the fake device responding. At the end of this phase, the fake
+device should appear in the list of USB devices available on the system, which you can see
+using the
+<a href="https://www.mankier.com/8/lsusb">lsusb</a> tool:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="pygments highlight"><code data-lang="bash"> $ lsusb</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Finally, launch the client application from yet another shell:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="pygments highlight"><code data-lang="bash"> $ lua myclient.lua</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If everything goes as expected, the client should now be able to detect and use the
+fake device as if it were a real one.</p>
+</div>
+<div class="paragraph">
+<p>To detach the fake device, first see its 'port' number (likely 00), then issue the
+detach command:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="pygments highlight"><code data-lang="bash"> $ sudo usbip port                <span class="tok-c1"># list the imported devices</span>
+ $ sudo usbip detach -p <span class="tok-m">00</span>        <span class="tok-c1"># detach Port 00</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>As a final note, the traffic between the emulator and the vhci driver can be captured
+and analized using
+<a href="https://www.wireshark.org/">Wireshark</a>,
+which has a built-in dissector for the USB/IP protocol.
+(The traffic travels on the loopback interface, assuming the server uses the 127.0.0.1 ip address.)</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
 <h2 id="links">Useful links</h2>
 <div class="sectionbody">
 <div class="ulist">
@@ -1974,6 +2277,13 @@ Values: '<em>char</em>', '<em>uchar</em>', '<em>short</em>', '<em>ushort</em>', 
 <a href="http://eleccelerator.com/usbdescreqparser/">USB parser</a> and
 <a href="https://eleccelerator.com/tutorial-about-usb-hid-report-descriptors/">HID report tutorial</a>.</p>
 </li>
+<li>
+<p>USB/IP <a href="http://usbip.sourceforge.net/">project homepage</a> and
+<a href="https://www.kernel.org/doc/Documentation/usb/usbip_protocol.txt">protocol specification</a>.</p>
+</li>
+<li>
+<p><a href="https://www.mankier.com/8/usbip">usbip(8)</a>, <a href="https://www.mankier.com/8/lsusb">lsusb(8)</a> (manpages).</p>
+</li>
 </ul>
 </div>
 </div>
@@ -1994,7 +2304,7 @@ Values: '<em>char</em>', '<em>uchar</em>', '<em>short</em>', '<em>ushort</em>', 
 <div id="footer">
 <div id="footer-text">
 Version 0.1<br>
-Last updated 2021-02-04 09:58:46 CET
+Last updated 2021-02-04 14:17:42 CET
 </div>
 </div>
 </body>
