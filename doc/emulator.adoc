@@ -1,0 +1,6 @@
+
+[[emulator]]
+== Device emulation
+
+@@ TODO: doc for the moonusb.emulator module
+
