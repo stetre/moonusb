@@ -1,6 +1,9 @@
 ## MoonUSB: Lua bindings for libusb
 
-MoonUSB is a Lua binding library for [libusb](https://libusb.info/).
+MoonUSB is a Lua binding library for [libusb](https://libusb.info/),
+allowing applications to access and use USB devices.
+
+MoonUSB also provides a submodule for emulating USB devices via [USB/IP](http://usbip.sourceforge.net/).
 
 It runs on GNU/Linux <!-- and on Windows (MSYS2/MinGW) --> and requires 
 [Lua](http://www.lua.org/) (>=5.3) and [libusb](https://github.com/libusb/libusb/releases) (>= 1.0.24).
