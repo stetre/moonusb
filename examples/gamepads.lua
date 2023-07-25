@@ -29,6 +29,7 @@ local EP_INT_IN = 0x81     -- address of the 'interrupt in' endpoint that sends 
 local REPORT_LEN = 8       -- report length for this device
 
 local usb = require("moonusb")
+usb.lock_on_close(true) -- see issues #1 and #2
 
 -- usb.trace_objects(true)
 local ctx = usb.init()

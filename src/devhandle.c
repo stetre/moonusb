@@ -25,6 +25,8 @@
 
 #include "internal.h"
 
+static int lock_on_close = 0;
+
 static int freedevhandle(lua_State *L, ud_t *ud)
     {
     devhandle_t *devhandle = (devhandle_t*)ud->handle;
@@ -33,9 +35,14 @@ static int freedevhandle(lua_State *L, ud_t *ud)
     freechildren(L, TRANSFER_MT, ud);
     freechildren(L, INTERFACE_MT, ud);
     if(!freeuserdata(L, ud, "devhandle")) return 0;
-    libusb_lock_events(context);
-    libusb_close(devhandle);
-    libusb_unlock_events(context);
+    if(lock_on_close)
+        {
+        libusb_lock_events(context);
+        libusb_close(devhandle);
+        libusb_unlock_events(context);
+        }
+    else
+        libusb_close(devhandle);
     return 0;
     }
 
@@ -184,6 +191,13 @@ static int Free_streams(lua_State *L)
     return 0;
     }
 
+static int LockOnClose(lua_State *L)
+    {
+    lock_on_close = checkboolean(L, 1);
+    return 0;
+    }
+
+
 RAW_FUNC(devhandle)
 DESTROY_FUNC(devhandle)
 
@@ -212,6 +226,7 @@ static const struct luaL_Reg MetaMethods[] =
 
 static const struct luaL_Reg Functions[] = 
     {
+        { "lock_on_close", LockOnClose },
         { NULL, NULL } /* sentinel */
     };
 

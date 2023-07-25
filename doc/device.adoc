@@ -36,6 +36,10 @@ Rfr: _libusb_open( )_, _libusb_close( )_.#
 Creates and returns both the _device_ and the _devhandle_ objects, or raises an error if no such device is found. +
 Rfr: _libusb_open_device_with_vid_pid( )_.#
 
+[[lock_on_close]]
+ * *lock_on_close*(_boolean_) +
+[small]#If _true_, lock events when closing a device (defaults to not locking). See issues #1 and #2.#
+
 === Device properties
 
 The methods described here can be used to query information about devices without the need
